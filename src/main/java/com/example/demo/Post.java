@@ -1,0 +1,44 @@
+package com.example.demo;
+
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "posts")
+public class Post{
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String title;
+
+    @Column(nullable = false , columnDefinition = "Text")
+    private String content;
+
+    protected Post() {}
+
+    public Post(String title, String content) {
+        this.title = title;
+        this.content = content;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void update(String title , String content) {
+        this.title = title;
+        this.content = content;
+    }
+}
+
+

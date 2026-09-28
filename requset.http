@@ -1,0 +1,167 @@
+### 전체 게시글 조회
+GET http://localhost:8080/posts
+
+### 제목 검색
+GET http://localhost:8080/posts?keyword=DB
+
+### 게시글 생성
+
+GET http://localhost:8080/posts
+Content-Type: application/json
+
+{
+    "title": "",
+    "content": "제목이 없으니 , 거절되어야 한다."
+}
+### 빈제목 검증
+POST http://localhost:8080/posts
+Content-Type: application/json
+
+{
+  "title": "",
+  "content": "제목이 없으니 거절되어야 한다."
+}
+
+### 첫 페이지: 2개씩
+GET http://localhost:8080/posts?page=0&size=2
+
+### 두 번째 페이지
+GET http://localhost:8080/posts?page=1&size=2
+
+### 검색 결과도 페이징
+GET http://localhost:8080/posts?keyword=DB&page=0&size=2
+
+### 페이지 응답 확인
+GET http://localhost:8080/posts?page=0&size=2&sort=id,desc
+
+>{%
+    client.test("조회 성공:200", function() {
+        client.assert(response.status === 200 , "상태코드가 200이 아닙니다.");
+        });
+    client.test("페이지 조건이 반영됨:200", function() {
+        client.assert(response.body.page === 0 , "페이지 번호가 다릅니다.");
+        client.assert(response.body.page === 2 , "페이지 번호가 다릅니다.");
+        client.assert(response.body.page.content.length <= 2,"글이 2개보다 많습니다.");
+    });
+ %}
+
+###빈 제목은 거절 되어야 함
+
+POST http://localhost:8080/posts
+Content-Type: application/json
+
+{
+  "title": "",
+  "content" : "검증 테스트"
+}
+
+> {%
+    client.test("빈제목 요청:400",function() {
+        client.assert(response.status === 400,"빈 제목을 거절하지 않았습니다.");
+            client.assert(
+                response.body.title === "제목을 입력해 주세요.",
+                "제목 오류 메시지가 예상과 다릅니다."
+            );
+    });
+
+ %}
+
+###페이징 자동검사
+GET http://localhost:8080/posts?page=0&size=2&sort=id,desc
+
+> {%
+    client.test("게시글 목록 조회 성공:200", function() {
+        client.assert(response.status === 200, "200 응답이어야 합니다.");
+    });
+
+    client.test("페이지 조건 반영" , function() {
+        client.assert(response.body.page === 0 , "첫 페이지여야 합니다.");
+        client.assert(response.body.size === 2 , "페이지 크기는 2여야 합니다.");
+        client.assert(response.body.content.length <=2 , "게시글은 최대 2개여야 합니다.");
+
+    });
+%}
+
+### 테스트 실행 확인
+GET http://localhost:8080/posts?page=0&size=2
+
+> {%
+    client.log("응답 처리기 실행됨");
+
+    client.test("일부러 실패", function () {
+        client.assert(false, "이 메시지가 보이면 테스트가 실행된 것입니다.");
+    });
+%}
+### 테스트용 게시글 생성
+POST http://localhost:8080/posts
+Content-Type: application/json
+
+{
+  "title": "자동 검사",
+  "content": "검사 후 삭제할 글"
+}
+
+> {%
+    client.test("생성 성공", function () {
+        client.assert(response.status === 201, "201이어야 합니다.");
+        client.assert(response.body.id != null, "ID가 있어야 합니다.");
+    });
+
+    if (response.status === 201 && response.body.id != null) {
+        client.global.set("testPostId", response.body.id);
+    }
+%}
+
+###테스트용 게시글 수정
+PUT http://localhost:8080/posts/{{testPostId}}
+Content-Type: application/json
+
+{
+  "title": "수정한 제목",
+  "content": "수정한 내용"
+}
+
+> {%
+    client.test("수정성공",function(){
+        client.assert(response.status === 200, "200이어야 합니다.");
+        client.assert(
+            response.body.title === "수정한 제목",
+            "수정 응답의 제목이 다릅니다."
+        );
+    });
+  %}
+
+###수정한 내용지 저장되었는지 다시 조회
+GET http://localhost:8080/posts/{{testPostId}}
+
+>{%
+    client.test("수정 내용이 조회됨",function() {
+        client.assert(response.status === 200, "200이어야 합니다.");
+            client.assert(
+                response.body.title === "수정한 제목",
+                "조회한 제목이 수정되지 않았습니다."
+                );
+            client.assert(
+                response.body.content === "수정한 내용",
+                "조회한 내용이 수정되지 않았습니다.
+                );
+    });
+ %}
+
+### 테스트 글 삭제
+DELETE http://localhost:8080/posts/{{testPostId}}
+
+> {%
+    client.test("삭제 성공", function () {
+        client.assert(response.status === 204, "204여야 합니다.");
+    });
+%}
+
+### 삭제됐는지 확인
+GET http://localhost:8080/posts/{{testPostId}}
+
+> {%
+    client.test("삭제 후 조회 불가", function () {
+        client.assert(response.status === 404, "404여야 합니다.");
+    });
+%}

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>모아 - 글 작성</title>
+
+  <style>
+    body {
+      max-width: 600px;
+      margin: 60px auto;
+      padding: 0 20px;
+      font-family: sans-serif;
+    }
+
+    label {
+      display: block;
+      margin-top: 20px;
+      margin-bottom: 8px;
+    }
+
+    input, textarea {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 12px;
+      font: inherit;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
+    pre {
+      padding: 16px;
+      background: #f3f3f3;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+  </style>
+</head>
+
+<body>
+<h1>모아</h1>
+<p>새 게시글 작성</p>
+
+<form id="post-form">
+  <label for="title">제목</label>
+  <input id="title" name="title" type="text">
+
+  <label for="content">내용</label>
+  <textarea id="content" name="content" rows="6"></textarea>
+
+  <button type="submit">저장</button>
+</form>
+
+<h2>게시글 삭제</h2>
+
+<label for="delete-id">삭제할 게시글 ID</label>
+<input id="delete-id" type="number" min="1" step="1">
+
+<button id="delete-button" type="button">삭제</button>
+
+<h2>처리 결과</h2>
+<pre id="result" aria-live="polite">아직 요청하지 않았습니다.</pre>
+
+<script>
+  const form = document.querySelector("#post-form");
+  const titleInput = document.querySelector("#title");
+  const contentInput = document.querySelector("#content");
+  const result = document.querySelector("#result");
+  const deleteIdInput = document.querySelector("#delete-id");
+  const deleteButton = document.querySelector("#delete-button");
+  deleteButton.addEventListener("click",async () => {
+    const id = deleteIdInput.value;
+
+    if(!id || !deleteButton.checkVisibility()) {
+      result.textContent = "올바른 게시글 입력.";
+      return;
+    }
+    if(!confirm(`${id}번 게시글을 삭제할까요?`)){
+      return;
+    }
+    try {
+      const response = await fetch(`/posts/${id}`,{
+        method:"DELETE"
+      });
+      if(response.status === 204) {
+        result.textContent = `${id}번 게시글을 삭제했습니다.`;
+        deleteIdInput.value = "";
+
+      }else {
+        result.textContent =
+                `삭제 실패 (${response.status})\\n${await response.text()}`;
+      }
+    }catch(error) {
+      result.textContent = "서버에 연결되지 않았습니다.";
+
+    }
+  })
+
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const postData = {
+      title: titleInput.value,
+      content: contentInput.value
+    };
+
+    // 현재는 입력값을 화면에 표시하기만 함
+    result.textContent = JSON.stringify(postData, null, 2);
+
+    // 여기에 HTTP 요청 코드를 작성해 봐.
+
+    const response = await fetch("/posts", {
+      method: "Post",
+      headers: {
+        "Content-Type" : "application/json"
+      },
+      body: JSON.stringify(postData)
+
+    });
+    const data= await response.json();
+    result.textContent = JSON.stringify(data,null,2);
+  });
+</script>
+</body>
+</html>
