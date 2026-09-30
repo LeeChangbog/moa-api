@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>모아 - 회원가입</title>
+
+    <style>
+        body {
+            max-width: 420px;
+            margin: 70px auto;
+            padding: 0 20px;
+            font-family: sans-serif;
+        }
+
+        label {
+            display: block;
+            margin: 20px 0 8px;
+        }
+
+        input, button {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 12px;
+            font: inherit;
+        }
+
+        button {
+            margin-top: 24px;
+            cursor: pointer;
+        }
+
+        small {
+            display: block;
+            margin-top: 6px;
+            color: #666;
+        }
+
+        #result {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+    </style>
+</head>
+
+<body>
+<h1>회원가입</h1>
+
+<form id="signup-form">
+    <label for="username">아이디</label>
+    <input
+            id="username"
+            name="username"
+            autocomplete="username"
+            required
+            minlength="4"
+            maxlength="50"
+            pattern="[a-zA-Z0-9_]{4,50}"
+    >
+    <small>영문·숫자·밑줄로 4~50자</small>
+
+    <label for="password">비밀번호</label>
+    <input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="new-password"
+            required
+            minlength="8"
+            maxlength="64"
+    >
+    <small>공백 없는 영문·숫자·특수문자로 8~64자</small>
+
+    <button id="submit-button" type="submit">가입하기</button>
+</form>
+
+<p id="result" role="status" aria-live="polite"></p>
+
+<a href="/">게시판으로 돌아가기</a>
+
+<script>
+    const form = document.querySelector("#signup-form");
+    const usernameInput = document.querySelector("#username");
+    const passwordInput = document.querySelector("#password");
+    const submitButton = document.querySelector("#submit-button");
+    const result = document.querySelector("#result");
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const signupData = {
+            username: usernameInput.value,
+            password: passwordInput.value
+        };
+
+        submitButton.disabled = true;
+        result.textContent = "가입 처리 중입니다.";
+
+        try {
+            const response = await fetch("/members", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(signupData)
+            });
+
+            const text = await response.text();
+            let data = {};
+
+            if (text) {
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    result.textContent =
+                        `응답을 읽을 수 없습니다. (${response.status})`;
+                    return;
+                }
+            }
+
+            if (response.status === 201) {
+                result.textContent =
+                    `${data.username}님, 회원가입이 완료됐습니다.`;
+                form.reset();
+            } else {
+                const message =
+                    data.message ||
+                    data.detail ||
+                    [data.username, data.password]
+                        .filter(Boolean)
+                        .join("\n") ||
+                    `회원가입에 실패했습니다. (${response.status})`;
+
+                result.textContent = message;
+            }
+        } catch (error) {
+            result.textContent =
+                "서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+        } finally {
+            passwordInput.value = "";
+            submitButton.disabled = false;
+        }
+    });
+</script>
+</body>
+</html>

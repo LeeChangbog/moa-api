@@ -9,6 +9,8 @@ import java.util.List;
 
 public interface PostRepository
         extends JpaRepository<Post,Long> {
-        Page<Post> findByTitleContaining(String keywords , Pageable pageable );
+        Page<Post> findByTitleContainingAndIdGreaterThanEqual(String keywords ,Long minId, Pageable pageable );
+        Page<Post> findByIdGreaterThanEqual(Long minId, Pageable pageable);
+        Page<Post> findByTitleContaining(String keywords, Pageable pageable);
 
 }

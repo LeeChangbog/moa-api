@@ -19,14 +19,16 @@ public class PostController { // 이 아래부터 요청을 처리할 메서드�
         this.postService = postService;
     }
 
+    //GET /posts?keyword=DB&page=0&size=2 이런 요청이 들어오면 게시글 목록을 처리함, page는 몇번째 page 인지 size는 page당 몇개의
+    //게시글이 있어야 하는지 keyword는 게시글 제목에서 특정 단어를 key로 설정후, 정렬
+    //
     @GetMapping("/posts")
-    public PostPageResponse getposts(@RequestParam(required = false,name = "keyword") String keyword,
-                               @PageableDefault( size = 10,
-                                                 sort = "id",
-                                                 direction = Sort.Direction.DESC
-                               )Pageable pageable)
-    {
-        Page<Post> posts = postService.getPosts(keyword,pageable);
+    public PostPageResponse getposts(@RequestParam(required = false, name = "keyword") String keyword,
+                                     @PageableDefault(size = 10,
+                                             sort = "id",
+                                             direction = Sort.Direction.DESC
+                                     ) Pageable pageable, @RequestParam(required = false, name = "minId") Long minId) {
+        Page<Post> posts = postService.getPosts(keyword,pageable,minId);
         Page<PostResponse> responses = posts.map(PostResponse::from);
 
         return new PostPageResponse(
@@ -36,7 +38,9 @@ public class PostController { // 이 아래부터 요청을 처리할 메서드�
                 responses.getTotalElements(),
                 responses.getTotalPages()
         );
+
     }
+
     @GetMapping("/posts/{id}")
     public PostResponse getPost(@PathVariable("id")Long id) {
         Post post = postService.getPost(id);
@@ -63,7 +67,8 @@ public class PostController { // 이 아래부터 요청을 처리할 메서드�
         postService.deletePost(id);
 
     }
-
+    //@GetMapping("/posts/{minId}")
+    //public
 
 
 

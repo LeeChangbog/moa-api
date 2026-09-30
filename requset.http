@@ -165,3 +165,25 @@ GET http://localhost:8080/posts/{{testPostId}}
         client.assert(response.status === 404, "404여야 합니다.");
     });
 %}
+
+### 회원가입
+POST http://localhost:8080/members
+Content-Type: application/json
+
+{
+  "username": "practice01",
+  "password": "Practice123!"
+}
+
+
+### 조건 없음
+GET http://localhost:8080/posts
+
+### 제목만
+GET http://localhost:8080/posts?keyword=DB
+
+### 최소 ID만
+GET http://localhost:8080/posts?minId=5
+
+### 두 조건 모두 + 페이징
+GET http://localhost:8080/posts?keyword=DB&minId=5&page=0&size=2

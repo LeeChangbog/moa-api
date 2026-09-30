@@ -31,13 +31,20 @@ public class PostService {
 
 
 
-    public Page<Post> getPosts(String keyword,Pageable pageable) {
+    public Page<Post> getPosts(String keyword,Pageable pageable,Long minId) {
         // 서버 실행시킨 순간 메서들도 로딩이 됨 다만 서버가 부를때 까지 기다림.
 
-        if(keyword == null || keyword.isBlank()){
+        if((keyword == null || keyword.isBlank()) && (minId == null)){
             return postRepository.findAll(pageable);
         }
-        return postRepository.findByTitleContaining(keyword,pageable);
+        else if((keyword != null && !keyword.isBlank()) && (minId == null)){
+            return postRepository.findByTitleContaining(keyword , pageable);
+
+        }
+        else if((keyword == null || keyword.isBlank()) && (minId != null)){
+            return postRepository.findByIdGreaterThanEqual(minId,pageable);
+        }
+        return postRepository.findByTitleContainingAndIdGreaterThanEqual(keyword,minId,pageable);
     }
 
 
